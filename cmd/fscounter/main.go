@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	//"time"
 )
 
 const FSN_MOST = fsnotify.FSN_DELETE | fsnotify.FSN_RENAME | fsnotify.FSN_CREATE
@@ -31,7 +32,15 @@ func startHandler(watcher *fsnotify.Watcher, ch chan *fsnotify.FileEvent) {
 		select {
 		case ev := <-watcher.Event:
 			if ev.IsCreate() {
-				isdir, err := isDir(ev.Name)
+				filepath.Walk(ev.Name, func(path string, info os.FileInfo, err error) error {
+					if info.IsDir() {
+						fmt.Printf("%s %#v\n", path, info)
+						// log.Printf("w:Creating new watcher on %s", path)
+						watcher.WatchFlags(path, FSN_MOST)
+					}
+					return nil
+				})
+				/*isdir, err := isDir(ev.Name)
 				if err != nil {
 					continue
 				}
@@ -39,14 +48,17 @@ func startHandler(watcher *fsnotify.Watcher, ch chan *fsnotify.FileEvent) {
 					// log.Printf("Creating new watcher on %s", ev.Name)
 					fmt.Println(watcher.WatchFlags(ev.Name, FSN_MOST))
 					fmt.Println(watcher.WatchFlags(ev.Name, FSN_MOST))
+					fmt.Println("sleep")
+					//time.Sleep(time.Second)
 					filepath.Walk(ev.Name, func(path string, info os.FileInfo, err error) error {
+						fmt.Printf("%s %#v\n", path, info)
 						if info.IsDir() {
 							// log.Printf("w:Creating new watcher on %s", path)
 							watcher.WatchFlags(path, FSN_MOST)
 						}
 						return nil
 					})
-				}
+				}*/
 			} else if ev.IsDelete() {
 				// log.Println("Close watcher if delete a dir.")
 				watcher.RemoveWatch(ev.Name)
